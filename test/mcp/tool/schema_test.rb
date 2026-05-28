@@ -6,7 +6,7 @@ module MCP
   class Tool
     class SchemaTest < ActiveSupport::TestCase
       setup do
-        Schema::VALIDATION_CACHE.clear
+        MCP.configuration.schema_validation_cache.clear
       end
 
       test "validates a schema once and reuses the result for identical schemas" do

@@ -34,7 +34,6 @@ module MCP
           @mutex.synchronize { @entries.clear }
         end
       end
-      VALIDATION_CACHE = ValidationCache.new
 
       # JSON Schema 2020-12 is the default dialect for MCP schema definitions
       # per MCP 2025-11-25 (SEP-1613). Note: emission only — runtime validation
@@ -73,7 +72,7 @@ module MCP
         # so the default `JSON.generate` limit would raise on a deeply nested schema that
         # the initializer already accepted.
         key = Digest::SHA256.hexdigest(JSON.generate(target, max_nesting: false))
-        return if VALIDATION_CACHE.validated?(key)
+        return if validation_cache.validated?(key)
 
         gem_path = File.realpath(Gem.loaded_specs["json-schema"].full_gem_path)
         schema_reader = JSON::Schema::Reader.new(
@@ -89,7 +88,7 @@ module MCP
           raise ArgumentError, "Invalid JSON Schema: #{errors.join(", ")}"
         end
 
-        VALIDATION_CACHE.store(key)
+        validation_cache.store(key)
       end
 
       # The `json-schema` gem's draft-04 validator cannot resolve newer or unknown `$schema`
@@ -101,6 +100,10 @@ module MCP
         copy = @schema.dup
         copy.delete(:"$schema")
         copy
+      end
+
+      def validation_cache
+        MCP.configuration.schema_validation_cache
       end
     end
   end

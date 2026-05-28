@@ -16,7 +16,8 @@ module MCP
     attr_writer :instrumentation_callback
 
     def initialize(exception_reporter: nil, around_request: nil, instrumentation_callback: nil, protocol_version: nil,
-      validate_tool_call_arguments: true, validate_tool_call_results: false)
+      validate_tool_call_arguments: true, validate_tool_call_results: false,
+      schema_validation_cache: Tool::Schema::ValidationCache.new)
       @exception_reporter = exception_reporter
       @around_request = around_request
       @instrumentation_callback = instrumentation_callback
@@ -29,6 +30,9 @@ module MCP
 
       @validate_tool_call_arguments = validate_tool_call_arguments
       @validate_tool_call_results = validate_tool_call_results
+
+      validate_value_of_schema_validation_cache!(schema_validation_cache)
+      @schema_validation_cache = schema_validation_cache
     end
 
     def protocol_version=(protocol_version)
@@ -47,6 +51,14 @@ module MCP
       validate_value_of_validate_tool_call_results!(validate_tool_call_results)
 
       @validate_tool_call_results = validate_tool_call_results
+    end
+
+    attr_reader :schema_validation_cache
+
+    def schema_validation_cache=(schema_validation_cache)
+      validate_value_of_schema_validation_cache!(schema_validation_cache)
+
+      @schema_validation_cache = schema_validation_cache
     end
 
     def protocol_version
@@ -127,6 +139,7 @@ module MCP
 
       validate_tool_call_arguments = other.validate_tool_call_arguments
       validate_tool_call_results = other.validate_tool_call_results
+      schema_validation_cache = other.schema_validation_cache
 
       Configuration.new(
         exception_reporter: exception_reporter,
@@ -135,6 +148,7 @@ module MCP
         protocol_version: protocol_version,
         validate_tool_call_arguments: validate_tool_call_arguments,
         validate_tool_call_results: validate_tool_call_results,
+        schema_validation_cache: schema_validation_cache,
       )
     end
 
@@ -156,6 +170,12 @@ module MCP
     def validate_value_of_validate_tool_call_results!(validate_tool_call_results)
       unless validate_tool_call_results.is_a?(TrueClass) || validate_tool_call_results.is_a?(FalseClass)
         raise ArgumentError, "validate_tool_call_results must be a boolean"
+      end
+    end
+
+    def validate_value_of_schema_validation_cache!(schema_validation_cache)
+      unless schema_validation_cache.is_a?(Tool::Schema::ValidationCache)
+        raise ArgumentError, "schema_validation_cache must be an instance of SchemaValidationCache"
       end
     end
 
